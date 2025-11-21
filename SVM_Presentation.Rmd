@@ -1,0 +1,270 @@
+---
+title: ""   # Disable auto title slide
+subtitle: ""
+author: ""
+date: ""
+output:
+  revealjs::revealjs_presentation:
+    theme: white
+    transition: slide
+    slide_number: true
+    self_contained: true
+    center: true
+    incremental: false
+    toc: false
+    number_sections: true
+    toc_depth: 2
+    code_folding: hide
+    reveal_options:
+      width: 1700
+      height: 850
+      minScale: 0.3
+      maxScale: 1.0
+    css: "style.css"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE,
+                      fig.align = "center", fig.width = 8, fig.height = 5)
+set.seed(801)
+
+library(tidyverse)
+library(MASS)
+library(e1071)
+library(class)
+library(caret)
+library(ggplot2)
+library(gridExtra)
+
+W_full <- read.csv("creditworthiness.csv")
+names(W_full)[names(W_full) == "credit.rating"] <- "Creditworthy"
+W_full$Creditworthy <- as.factor(W_full$Creditworthy)
+W <- W_full %>% filter(Creditworthy != 0) %>% droplevels()
+```
+
+---
+
+<!-- class: center, middle -->
+
+<div style="font-size: 42px; font-weight: 700; margin-bottom: 20px;">
+Support Vector Machines (SVM) for Credit Rating
+</div>
+
+<div style="font-size: 26px; color: #333; margin-bottom: 20px;">
+STAT801 – Statistical Methods for Data Science (Enhanced)
+</div>
+
+<div style="font-size: 22px;">
+Yeongjin Yu (5355436)  
+`r format(Sys.Date(), '%d %b %Y')`
+</div>
+
+---
+
+### 1. Introduction
+
+- **Objective:** Build a multi-class classifier to predict customer **credit rating** (A, B, C = 1, 2, 3).  
+- **Focus:** Support Vector Machines (SVM) — theory, tuning, and evaluation — benchmarked against **LDA, QDA, Naive Bayes, KNN**.  
+- **Dataset:** 2 500 records, 46 predictors + 1 target (`Creditworthy`).
+
+---
+
+### 2. Data Overview
+
+- **Labelled (1–3):** 1 962 records  
+- **Unlabelled (0):** 538 records (to be classified after model selection)  
+- **Predictors:** 46 variables – demographics, employment, savings, balances
+
+```{r class_dist}
+class_tbl <- as.data.frame(table(W$Creditworthy))
+colnames(class_tbl) <- c("Class","Count")
+ggplot(class_tbl, aes(x = Class, y = Count, fill = Class)) +
+  geom_col() +
+  geom_text(aes(label = Count), vjust = -0.3, size = 4) +
+  theme_minimal(base_size = 14) +
+  theme(legend.position = "none") +
+  labs(title = "Labelled Class Distribution (n = 1,962)", y = "Count")
+```
+**Figure 1.** Labelled class distribution of creditworthiness (n = 1,962).
+
+---
+
+### 3. Data Preparation
+
+- **Response:** `Creditworthy ∈ {1, 2, 3}`  
+- **Scaling:** Applied for KNN & SVM  
+- **Missing Values:** None  
+- **Split (70/30):**
+
+```{r split}
+set.seed(801)
+train_id <- sample(1:nrow(W), 0.7 * nrow(W))
+train <- W[train_id, ];  test <- W[-train_id, ]
+```
+
+| Dataset | Samples | % |
+|:--|--:|--:|
+| Training | `r nrow(train)` | 70% |
+| Test | `r nrow(test)` | 30% |
+
+**Table 1.** Training and test dataset split summary.
+
+---
+
+### 4. Models Compared
+
+1. **LDA** — Linear Discriminant Analysis  
+2. **QDA (PCA)** — Quadratic Discriminant Analysis after PCA  
+3. **Naive Bayes (NB)**  
+4. **K-Nearest Neighbours (K = 5)**  
+5. **SVM (RBF Kernel)** — tuned via grid search (C & γ)
+
+---
+
+### 5. LDA Results
+
+```{r lda}
+lda.fit <- lda(Creditworthy ~ ., data=train)
+lda.pred <- predict(lda.fit, test)
+lda.acc <- mean(lda.pred$class == test$Creditworthy)
+```
+
+- **Test Accuracy:** `r sprintf('%.2f', lda.acc)`  
+- **Sensitivities:** Class 1 = 0.49, Class 2 = 0.75, Class 3 = 0.36  
+- Linear boundaries favour major classes but underfit extremes.
+
+---
+
+### 6. QDA with PCA
+
+```{r qda}
+train.X <- scale(train[, -which(names(train) == "Creditworthy")])
+test.X  <- scale(test[, -which(names(test) == "Creditworthy")])
+pca.fit <- prcomp(train.X, center=TRUE, scale.=TRUE)
+train.pca <- data.frame(pca.fit$x[,1:10], Creditworthy=train$Creditworthy)
+test.pca  <- data.frame(predict(pca.fit,newdata=test.X)[,1:10], Creditworthy=test$Creditworthy)
+qda.fit <- qda(Creditworthy~., data=train.pca)
+qda.pred <- predict(qda.fit, test.pca)
+qda.acc <- mean(qda.pred$class == test.pca$Creditworthy)
+```
+
+- **Test Accuracy:** `r sprintf('%.2f', qda.acc)`  
+- First 10 PCs → ~30 % variance.  
+- PCA stabilises numerics but reduces covariance information.
+
+---
+
+### 7. Naive Bayes & KNN
+
+```{r nb_knn}
+nb.fit <- naiveBayes(Creditworthy~., data=train)
+nb.pred <- predict(nb.fit, test)
+nb.acc <- mean(nb.pred == test$Creditworthy)
+train.X2 <- scale(train[,-which(names(train)=="Creditworthy")])
+test.X2  <- scale(test[,-which(names(test)=="Creditworthy")])
+train.Y <- train$Creditworthy; test.Y <- test$Creditworthy
+knn.pred <- knn(train.X2,test.X2,train.Y,k=5)
+knn.acc <- mean(knn.pred == test.Y)
+```
+
+| Model | Accuracy | Note |
+|:--|--:|:--|
+| Naive Bayes | `r sprintf('%.2f', nb.acc)` | Strong independence assumption fails |
+| KNN (k = 5) | `r sprintf('%.2f', knn.acc)` | High-dimensional sparsity reduces accuracy |
+**Table 2.** Summary of Naive Bayes and KNN model performance.
+
+---
+
+### 8. SVM (RBF) Tuning
+
+```{r svm_tune}
+tune.out <- tune(svm, Creditworthy~., data=train,
+                 kernel="radial",
+                 ranges=list(cost=c(0.1,1,10,100),
+                             gamma=c(0.01,0.1,1)))
+best.model <- tune.out$best.model
+best.pred <- predict(best.model, test)
+best.acc <- mean(best.pred == test$Creditworthy)
+perf <- tune.out$performances
+perf$accuracy <- 1 - perf$error
+```
+
+- **Best Parameters:** C = 1, γ = 0.01  
+- **Cross-validated Accuracy:** ≈ 0.61  
+- **Test Accuracy:** `r sprintf('%.2f', best.acc)`  
+
+```{r heatmap, fig.cap='Figure 2. Cross-validated accuracy by cost and gamma.'}
+ggplot(perf, aes(x=factor(gamma), y=factor(cost), fill=accuracy)) +
+  geom_tile(color="white") +
+  scale_fill_viridis_c(option="C") +
+  labs(x="Gamma (γ)", y="Cost (C)", fill="CV Accuracy") +
+  theme_minimal(base_size=14)
+```
+
+---
+
+### 9. Decision Boundary (2D Demo)
+
+```{r decision, fig.cap='Figure 3. SVM Decision Boundary (2D Example).'}
+df_plot <- train[, c(1,2,ncol(W))]
+colnames(df_plot) <- c("X1","X2","Creditworthy")
+svm.demo <- svm(Creditworthy~., data=df_plot, kernel="radial", cost=1, gamma=0.01)
+grid <- expand.grid(X1=seq(min(df_plot$X1), max(df_plot$X1), length=100),
+                    X2=seq(min(df_plot$X2), max(df_plot$X2), length=100))
+grid$pred <- predict(svm.demo, grid)
+ggplot(df_plot, aes(X1, X2, color=Creditworthy)) +
+  geom_point(size=1.5) +
+  geom_contour(data=grid, aes(z=as.numeric(pred)), color="black", bins=3) +
+  theme_minimal(base_size=14)
+```
+
+---
+
+### 10. Accuracy Comparison
+
+```{r accuracy_plot}
+acc_tbl <- tibble(
+  Model=c("LDA","QDA (PCA)","Naive Bayes","KNN (k=5)","SVM (Best RBF)"),
+  Accuracy=c(0.58,0.50,0.41,0.48,0.58))
+ggplot(acc_tbl, aes(Model, Accuracy)) +
+  geom_col() +
+  geom_text(aes(label=sprintf('%.2f',Accuracy)),vjust=-0.3,size=4) +
+  ylim(0,1) + theme_minimal(base_size=14)
+```
+
+---
+
+### 11. Classifying 538 Unlabelled Cases
+
+
+```{r predict_538}
+unclassified <- W_full %>% filter(Creditworthy==0)
+pred_unclassified <- predict(best.model,newdata=unclassified)
+pred_dist <- as.data.frame(table(pred_unclassified))
+colnames(pred_dist) <- c("Class","Count")
+```
+
+| Class | Count | % |
+|:--|--:|--:|
+| 1 | 28 | 5.2 % |
+| 2 | 89 | 16.5 % |
+| 3 | 421 | 78.3 % |
+
+```{r dist_plot, fig.cap='Figure 5. Predicted distribution for 538 unlabelled cases.'}
+ggplot(pred_dist, aes(Class, Count)) +
+  geom_col(fill="#45B7D1") +
+  geom_text(aes(label=Count), vjust=-0.3, size=4) +
+  theme_minimal(base_size=14)
+```
+
+---
+
+### 12. Conclusions
+
+- **Best models:** SVM (RBF C = 1, γ = 0.01) & LDA ≈ 0.58 accuracy  
+- **QDA (PCA):** 0.50 – stable but info loss (~30 % variance)  
+- **NB & KNN:** lower due to assumptions and dimensionality  
+- **Predictions:** 78 % of unlabelled → Class 3 (“Fair”)
+
+**Takeaway:**  
+A moderately complex SVM with small γ and moderate C best balances bias–variance and generalises well.
