@@ -67,11 +67,11 @@ Test accuracies were:
 
 The figure below shows SVM cross-validated accuracy across combinations of cost (C) and gamma (γ):
 
-![SVM Tuning Heatmap](<img width="1731" height="1086" alt="new_svm1_Rplot" src="https://github.com/user-attachments/assets/21043b83-3a68-4fe1-913a-8a46c3d7f853" />)
+![SVM Tuning Heatmap](<https://github.com/user-attachments/assets/21043b83-3a68-4fe1-913a-8a46c3d7f853>)
 
 A 2D demonstration of the SVM decision boundary is also included for intuition (subsetting to the first two predictors):
 
-![SVM Decision Boundary](<img width="1731" height="1086" alt="new_svm2_Rplot" src="https://github.com/user-attachments/assets/e686525b-4943-4293-b371-d00eac74d522" />)
+![SVM Decision Boundary](<https://github.com/user-attachments/assets/e686525b-4943-4293-b371-d00eac74d522>)
 
 ---
 
