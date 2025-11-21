@@ -59,8 +59,8 @@ All analysis is implemented in R as part of STAT801 coursework.
 Each model was trained on the labelled portion of the dataset (n = 1,962) and evaluated on a 30% test split.  
 Test accuracies were:
 
-- **SVM (RBF, tuned): 0.584**
-- **LDA: 0.577**
+- SVM (RBF, tuned): 0.584
+- LDA: 0.577
 - QDA (with PCA): 0.501  
 - KNN (k = 5): 0.477  
 - Naive Bayes: 0.409  
@@ -77,13 +77,13 @@ A 2D demonstration of the SVM decision boundary is also included for intuition (
 
 ## Prediction of 538 Unclassified Cases
 
-After model selection, the best SVM model (RBF kernel, **C = 1**, **gamma = 0.01**) was used to predict the credit ratings of **538 previously unlabelled cases**.
+After model selection, the best SVM model (RBF kernel, C = 1, gamma = 0.01) was used to predict the credit ratings of 538 previously unlabelled cases.
 
 The predictions resulted in:
 
-- **28** cases → Credit Rating **1 (A)**
-- **89** cases → Credit Rating **2 (B)**
-- **421** cases → Credit Rating **3 (C)**
+- 28 cases → Credit Rating 1 (A)
+- 89 cases → Credit Rating 2 (B)
+- 421 cases → Credit Rating 3 (C)
 
 The output file is included as:
 
