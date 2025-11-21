@@ -1,5 +1,5 @@
 # STAT801 – Creditworthiness Classification  
-Course: STAT801 – Statistical Methods for Data Science (Enhanced)
+Course: STAT801 – Statistical Methods for Data Science (Enhanced)  
 Author: Yeongjin Yu  
 Date: 2025
 
