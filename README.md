@@ -28,7 +28,7 @@ All analysis is implemented in R as part of STAT801 coursework.
 
 ---
 
-## 🧠 Methods & Models
+## Methods & Models
 
 ### 1. **Linear Discriminant Analysis (LDA)**  
 - Baseline model for comparison  
@@ -54,7 +54,7 @@ All analysis is implemented in R as part of STAT801 coursework.
 
 ---
 
-## 📈 Model Performance Summary
+## Model Performance Summary
 
 Each model was trained on the labelled portion of the dataset (n = 1,962) and evaluated on a 30% test split.  
 Test accuracies were:
@@ -67,17 +67,15 @@ Test accuracies were:
 
 The figure below shows SVM cross-validated accuracy across combinations of cost (C) and gamma (γ):
 
-![SVM Tuning Heatmap](<img width="1731" height="1086" alt="new_svm1_Rplot" src="https://github.com/user-attachments/assets/34b6586d-a068-4bbc-9993-5f50bfcba76a" />
-)
+![SVM Tuning Heatmap](<img width="1731" height="1086" alt="new_svm1_Rplot" src="https://github.com/user-attachments/assets/21043b83-3a68-4fe1-913a-8a46c3d7f853" />)
 
 A 2D demonstration of the SVM decision boundary is also included for intuition (subsetting to the first two predictors):
 
-![SVM Decision Boundary](<img width="1731" height="1086" alt="new_svm2_Rplot" src="https://github.com/user-attachments/assets/a0a5e9b1-3db0-4d39-82d8-b963906d6588" />
-)
+![SVM Decision Boundary](<img width="1731" height="1086" alt="new_svm2_Rplot" src="https://github.com/user-attachments/assets/e686525b-4943-4293-b371-d00eac74d522" />)
 
 ---
 
-## 📤 Prediction of 538 Unclassified Cases
+## Prediction of 538 Unclassified Cases
 
 After model selection, the best SVM model (RBF kernel, **C = 1**, **gamma = 0.01**) was used to predict the credit ratings of **538 previously unlabelled cases**.
 
